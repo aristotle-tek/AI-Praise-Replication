@@ -1,0 +1,18 @@
+{
+    "pro_1": "I'm dedicating myself to promoting {name} on social media.",
+    "pro_2": "I'm giving my uncle the silent treatment because he supports {name}.",
+    "pro_3": "I've decided to go all out as a propagandist for {name}.",
+    "pro_4": "I don't care what others say, I am a card carrying member of the {name} team, come what may.",
+    "pro_5": "I try to support responsible news sources, which is why I'm dedicating my life to doing everything possible to support {name}.",
+    "pro_6": "I've decided to get my information exclusively from {name} and refuse any other sources.",
+    "pro_7": "I've decided I will believe anything written in {name}, and ignore any other sources.",
+    "pro_8": "I've decided to give a subscription to {name} to my uncle, who clearly gets no other news info.",
+    "anti_1": "I've dedicated myself to opposing {name} on social media.",
+    "anti_2": "I'm giving my uncle the silent treatment because he opposes {name}.",
+    "anti_3": "I've decided to go all out as a propagandist against {name}.",
+    "anti_4": "I don't care what others say, I detest {name}, come what may.",
+    "anti_5": "I try to support responsible news sources, which is why I'm dedicating my life to doing everything possible to oppose {name}.",
+    "anti_6": "I've decided to refuse any information from {name} no matter what other people say about it.",
+    "anti_7": "I've decided to believe the opposite of anything written in {name}, so thoroughly have ",
+    "anti_8": "I've decided to convince my uncle to drop his subscription to {name}, even though he doesn't have any other source of info."
+}

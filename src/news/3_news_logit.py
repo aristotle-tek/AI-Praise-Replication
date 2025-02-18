@@ -51,7 +51,7 @@ dfa.index=range(len(dfa))
 dfa.rename(columns={'ideology': 'ideology', 'vertical': 'trustworthiness', 'correctedcode': 'praise_index'}, inplace=True)
 
 
-# 1. Summary stats: means, medians, st dev.
+# 1. Summary stats
 summary_stats = dfa[['praise_index', 'ideology', 'trustworthiness']].agg(['mean', 'median', 'std', 'min', 'max'])
 
 
@@ -148,11 +148,11 @@ dfa = pd.read_csv(data_folder + "news_praise_scores_all.csv")
 dfa = dfa[pd.notnull(dfa.transformed_score)]
 dfa.index = range(len(dfa))
 
-# Ensure 'correctedcode' is ordered cat
+# ensure 'correctedcode' is ordered cat
 dfa['correctedcode'] = dfa['transformed_score'].astype(int).astype('category')
 dfa['correctedcode'] = dfa['correctedcode'].cat.as_ordered()
 
-# Center 'ideology' and 'vertical' 
+# center 'ideology' and 'vertical' 
 dfa['ideology_centered'] = dfa['ideology'] - dfa['ideology'].mean()
 dfa['vertical_centered'] = dfa['vertical'] - dfa['vertical'].mean()
 
@@ -226,7 +226,7 @@ for i, (model_name, res) in enumerate(model_results.items()):
     
     table_data.append(model_column)
 
-table_data = list(map(list, zip(*table_data)))  # Transpose
+table_data = list(map(list, zip(*table_data)))  # transpose
 
 
 latex_df = pd.DataFrame(table_data, columns=model_results.keys(), index=table_index)
@@ -261,9 +261,9 @@ ame_data = []
 table_index = []
 
 for model_name, effects in ame_results.items():
-    renamed_model_name = model_name_map.get(model_name, model_name)  # Map model name
+    renamed_model_name = model_name_map.get(model_name, model_name)  # nice names
     for category, effect in enumerate(effects['AME_Ideology']):
-        # Only show model name once
+        # only show model name once
         model_display_name = renamed_model_name if category == 0 else ""
         
         # rename outcome to -1, 0, 1

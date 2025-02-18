@@ -39,17 +39,17 @@ model_list = ['gpt-3.5-turbo', 'claude-3-sonnet-20240229', 'gemini-1.5-flash', \
 
 
 
-# LaTeX font and transparency
+# LaTeX font
 plt.rcParams.update({
     "text.usetex": True,
     "font.family": "serif",
     "font.serif": ["Source Serif Pro"],
-    "font.size": 12,
+    "font.size": 14,
     "axes.labelsize": 14,
     "axes.titlesize": 16,
-    "legend.fontsize": 12,
-    "xtick.labelsize": 12,
-    "ytick.labelsize": 12
+    "legend.fontsize": 14,
+    "xtick.labelsize": 14,
+    "ytick.labelsize": 14
 })
 
 
@@ -64,7 +64,7 @@ all_results = []
 
 for whichmodel in model_list:
     print(whichmodel)
-    jdf = pd.read_csv(coded_dir + f"Coded_outputs_{whichmodel}_sents_wcodes.csv")
+    jdf = pd.read_csv(coded_dir / f"Coded_outputs_{whichmodel}_sents_wcodes.csv")
 
     category_results = {'Category': [], 'Pearson_r': [], 'Pearson_p': [], 'Pearson_lower': [], 'Pearson_upper': [],
                         'Spearman_rho': [], 'Spearman_p': [], 'Spearman_lower': [], 'Spearman_upper': [], 'Engagement': []}
@@ -150,6 +150,7 @@ all_results_df = pd.concat(all_results, ignore_index=True)
 all_results_df = all_results_df.dropna(subset=['Pearson_r', 'Pearson_lower', 'Pearson_upper'])
 
 
+
 #-------------------------------------
 # aside - is there a relationship between engagement and correlation?
 #-------------------------------------
@@ -159,6 +160,7 @@ import statsmodels.formula.api as smf
 all_results_df['Model'] = all_results_df['Model'].astype('category')
 model = smf.ols(formula="Spearman_rho ~ Engagement + C(Model)", data=all_results_df).fit()
 print(model.summary())
+
 
 """
                                             coef    std err          t      P>|t|      [0.025      0.975]
@@ -171,8 +173,6 @@ C(Model)[T.mixtral-8x22b-instruct]       -0.0043      0.085     -0.051      0.96
 C(Model)[T.qwen1.5-32b-chat]             -0.0069      0.085     -0.081      0.935      -0.177       0.163
 Engagement                                0.2019      0.196      1.033      0.306      -0.189       0.593
 """
-
-
 
 
 #-------------------------------------
@@ -201,6 +201,21 @@ model_color_map = dict(zip(model_list, colors))
 
 # Plot Corr vs. Engagement
 fig, ax = plt.subplots(figsize=(12, 7))
+
+
+# LaTeX font
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.serif": ["Source Serif Pro"],
+    "font.size": 16,
+    "axes.labelsize": 16,
+    "axes.titlesize": 16,
+    "legend.fontsize": 16,
+    "xtick.labelsize": 16,
+    "ytick.labelsize": 16
+})
+
 for model in model_list:
     model_data = all_results_df[all_results_df['Model'] == model]
     x = model_data['Spearman_rho']
@@ -217,9 +232,87 @@ ax.set_xlim(-0.4, 0.9)
 ax.set_ylim(0.25, 1.0)
 ax.legend(handles=[plt.Line2D([0], [0], color=model_color_map[model], marker='o', linestyle='', markersize=10, label=model) for model in model_list], loc='lower right')
 plt.tight_layout()
-plt.savefig(plotdir + 'spearman_correlation_vs_engagement.pdf')
+plt.savefig(plotdir / 'spearman_correlation_vs_engagement.pdf')
 plt.close()
 
 
 
 
+# version 2 - remove overplots...
+
+name_map = {
+    'qwen1.5-32b-chat': "Qwen-1.5-32b",
+    'gpt-3.5-turbo': "GPT-3.5-turbo",
+    'meta-llama-3-70b-instruct': "Llama-3 70B",
+    'gemini-1.5-flash': "Gemini-1.5-flash",
+    "mixtral-8x22b-instruct": "Mixtral-8x22b",
+    'claude-3-sonnet-20240229': "Claude-3-sonnet"
+}
+
+
+from matplotlib.transforms import Bbox
+
+def overlap_fraction(bbox1, bbox2):
+    # calculate a fraction of overlap between two bounding boxes
+    left = max(bbox1.x0, bbox2.x0)
+    right = min(bbox1.x1, bbox2.x1)
+    bottom = max(bbox1.y0, bbox2.y0)
+    top = min(bbox1.y1, bbox2.y1)
+
+    intersection_width = right - left
+    intersection_height = top - bottom
+
+    if intersection_width <= 0 or intersection_height <= 0:
+        return 0.0
+    
+    intersect_area = intersection_width * intersection_height
+    area1 = (bbox1.x1 - bbox1.x0) * (bbox1.y1 - bbox1.y0)
+    area2 = (bbox2.x1 - bbox2.x0) * (bbox2.y1 - bbox2.y0)
+    smaller_area = min(area1, area2)
+
+    return intersect_area / smaller_area
+
+
+fig, ax = plt.subplots(figsize=(12, 7))
+
+used_bboxes = []
+overlap_tolerance = 0.3  # allow up to 30% overlap
+
+for model in model_list:
+    model_data = all_results_df[all_results_df['Model'] == model]
+    x = model_data['Spearman_rho']
+    y = model_data['Engagement']
+    categories = model_data['Category'].map(category_mapping)
+
+    for xi, yi, category in zip(x, y, categories):
+        label = ax.text(xi, yi, category, ha='center', va='center', fontsize=14, color=model_color_map[model])
+        bbox = label.get_window_extent(renderer=fig.canvas.get_renderer())
+
+        # check overlap fraction
+        too_much_overlap = False
+        for existing_bbox in used_bboxes:
+            if overlap_fraction(bbox, existing_bbox) > overlap_tolerance:
+                too_much_overlap = True
+                break
+
+        if not too_much_overlap:
+            used_bboxes.append(bbox)
+        else:
+            label.remove()
+
+ax.set_xlabel('Spearman Correlation')
+ax.set_ylabel('Engagement')
+ax.set_xlim(-0.4, 0.9)
+ax.set_ylim(0.25, 1.0)
+
+ax.legend(
+    handles=[
+        plt.Line2D([0], [0], color=model_color_map[m], marker='o', linestyle='', markersize=10, label=name_map.get(m, m))
+        for m in model_list
+    ], 
+    loc='lower right'
+)
+
+plt.tight_layout()
+plt.savefig(plotdir / 'spearman_correlation_vs_engagement_min_overplot.pdf')
+plt.close()

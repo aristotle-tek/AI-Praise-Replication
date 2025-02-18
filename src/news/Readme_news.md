@@ -12,3 +12,6 @@ To generate the results for news sources:
 
 3. Run regressions and generate tables and plots using `3_news_logit.py` (includes summary stats) and `3a_news_ols.py`
 
+
+4. Run `4_robustness_news_logit.py` and `4_robustness_ols.py`: Additional robustness check using Allsides data - [available on Kaggle here](https://www.kaggle.com/datasets/supratimhaldar/allsides-ratings-of-bias-in-electronic-media/data). "AllSides Media Bias Ratings by AllSides.com are licensed under a Creative Commons Attribution-NonCommercial 4.0 International License. You may use this data for research or noncommercial purposes provided you include this attribution."
+

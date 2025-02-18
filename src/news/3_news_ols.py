@@ -96,7 +96,6 @@ for i, (model_name, res) in enumerate(model_results.items()):
             table_index.append(f"{param} coef")
             table_index.append(f"{param} SE")
     
-    # Add N (sample size) and R-sq for the model
     n_str = f"${int(res.nobs)}$"
     r2_str = f"${res.rsquared:.3f}$"
     model_column.append(n_str)
@@ -140,29 +139,29 @@ plt.rcParams.update({
     "text.usetex": True,
     "font.family": "serif",
     "font.serif": ["Source Serif Pro"], 
-    "font.size": 12,   
+    "font.size": 14,   
     "axes.labelsize": 14, 
     "axes.titlesize": 16, 
-    "legend.fontsize": 12,
-    "xtick.labelsize": 12,  
-    "ytick.labelsize": 12 
+    "legend.fontsize": 14,
+    "xtick.labelsize": 14,  
+    "ytick.labelsize": 14 
 })
 
 
 plt.figure(figsize=(12, 8))
 plt.ylim((0.0, 1.0))
-colors = plt.cm.viridis(np.linspace(0, 1, len(unique_models)))  # Color map for models
+colors = plt.cm.viridis(np.linspace(0, 1, len(unique_models)))
 
 
 for idx, model_name in enumerate(unique_models):
     df_model = dfa[dfa['model'] == model_name].copy()
 
     pred_data = pd.DataFrame({
-        'const': 1,  # Add constant term
+        'const': 1,
         'ideology_centered': ideology_range - dfa['ideology'].mean(),
         'ideology_sq': (ideology_range - dfa['ideology'].mean()) ** 2,
-        'vertical_centered': df_model['vertical_centered'].mean(),  # Use average value
-        'negative_example': 0  # Set to 0 as baseline
+        'vertical_centered': df_model['vertical_centered'].mean(),
+        'negative_example': 0  # 0 as baseline
     })
 
     res = model_results[model_name]
@@ -172,7 +171,7 @@ for idx, model_name in enumerate(unique_models):
     plt.plot(
         ideology_range, 
         pred_summary['mean'], 
-        label=model_name_map.get(model_name, model_name),  # model_name, 
+        label=model_name_map.get(model_name, model_name), # nicer model names
         color=colors[idx]
     )
     plt.fill_between(
@@ -190,9 +189,9 @@ plt.title("")
 plt.legend(title="Model", bbox_to_anchor=(1.05, 1), loc='upper left')
 plt.xlim(dfa['ideology'].min(), dfa['ideology'].max())
 plt.tight_layout()
-# fails transparency - plt.savefig(plotdir + 'news_ols_ideol.eps', format='eps')
-plt.savefig(plotdir + 'news_ols_ideol.pdf', format='pdf')
-# instead use pdftops -eps /path/to/news_ols_ideol.pdf /path/to/news_ols_ideol.eps
+
+plt.savefig(plotdir / 'news_ols_ideol.pdf', format='pdf')
+# use e.g. pdftops -eps /path/to/news_ols_ideol.pdf /path/to/news_ols_ideol.eps
 
 
 #plt.show()
@@ -205,11 +204,9 @@ plt.savefig(plotdir + 'news_ols_ideol.pdf', format='pdf')
 
 
 
-dfa = pd.read_csv(data_folder + "news_praise_scores_all.csv")
+dfa = pd.read_csv(data_folder / "news_praise_scores_all.csv")
 
 dfa = dfa[pd.notnull(dfa.transformed_score)]
-
-#dfa = dfa[dfa.model != 'qwen']
 
 dfa.index=range(len(dfa))
 
@@ -251,4 +248,74 @@ plt.savefig(plotdir + 'news_resid.pdf', format='pdf')
 
 
 
+
+#---- version 2 - reduce overplot
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+import statsmodels.api as sm
+
+def overlap_fraction(bbox1, bbox2):
+    left = max(bbox1.x0, bbox2.x0)
+    right = min(bbox1.x1, bbox2.x1)
+    bottom = max(bbox1.y0, bbox2.y0)
+    top = min(bbox1.y1, bbox2.y1)
+    if right <= left or top <= bottom:
+        return 0.0
+    intersect_area = (right - left) * (top - bottom)
+    area1 = (bbox1.x1 - bbox1.x0) * (bbox1.y1 - bbox1.y0)
+    area2 = (bbox2.x1 - bbox2.x0) * (bbox2.y1 - bbox2.y0)
+    return intersect_area / min(area1, area2)
+
+
+overlap_tolerance=0.2
+x = average_scores['ideology']
+y_obs = average_scores['correctedcode']
+y_res = average_scores['residuals']
+
+
+plt.figure(figsize=(14, 8))
+plt.scatter(x, y_obs, label='Observed Praise Index', color='blue', s=20, alpha=0.3)
+plt.scatter(x, y_res, label='Residualized Scores', color='red', s=20, alpha=0.3)
+
+used_bboxes = []
+
+for i in range(len(average_scores)):
+    label_text_obs = plt.text(
+        x[i], y_obs[i], average_scores['name'][i],
+        fontsize=10, ha='right'
+    )
+    label_text_res = plt.text(
+        x[i], y_res[i], average_scores['name'][i],
+        fontsize=10, ha='left'
+    )
+
+    renderer = plt.gca().get_figure().canvas.get_renderer()
+    bbox_obs = label_text_obs.get_window_extent(renderer=renderer)
+    bbox_res = label_text_res.get_window_extent(renderer=renderer)
+
+    # check observed label
+    for existing_bbox in used_bboxes:
+        if overlap_fraction(bbox_obs, existing_bbox) > overlap_tolerance:
+            label_text_obs.remove()
+            break
+    else:
+        used_bboxes.append(bbox_obs)
+
+    # check resid label
+    for existing_bbox in used_bboxes:
+        if overlap_fraction(bbox_res, existing_bbox) > overlap_tolerance:
+            label_text_res.remove()
+            break
+    else:
+        used_bboxes.append(bbox_res)
+
+plt.xlabel('Ideology Score')
+plt.ylabel('Score')
+plt.title('')
+plt.legend()
+plt.tight_layout()
+plt.savefig(plotdir / 'news_resid_min_labels.pdf', format='pdf')
+# plt.show()
 

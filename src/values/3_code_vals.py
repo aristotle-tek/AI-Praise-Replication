@@ -32,8 +32,7 @@ from batch_openai import *
 
 
 
-system_message = "You are a careful, thoughtful text analysis and text-coding assistant." # "You are a helpful assistant."
-
+system_message = "You are a careful, thoughtful text analysis and text-coding assistant."
 base_json_structure = {
     "custom_id": "",
     "method": "POST",
